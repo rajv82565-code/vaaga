@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VAAGA'26.2.0 — Arts Day at CET Payyanur</title>
+  <meta name="description" content="VAAGA'26.2.0 is the official Arts Day of College of Engineering Payyanur (CETP), a day of dance, music, theatre and art rooted in Kerala's culture." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="is-loading">
+
+  <!-- Preloader -->
+  <div class="loader" aria-hidden="true">
+    <div class="loader__word">
+      <span>V</span><span>A</span><span>A</span><span>G</span><span>A</span><span>'</span><span>2</span><span>6</span>
+    </div>
+    <div class="loader__count"><span id="loaderCount">0</span>%</div>
+  </div>
+
+  <!-- Cursor -->
+  <div class="cursor" aria-hidden="true"><span class="cursor__label">View</span></div>
+
+  <!-- Nav -->
+  <header class="nav">
+    <a href="#home" class="nav__logo">VAAGA'26.2.0</a>
+    <nav class="nav__links">
+      <a href="#home" class="is-active">Home</a>
+      <a href="#about">About</a>
+      <a href="#exhibition">Showcase</a>
+      <a href="#auctions">Events</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#host">Register</a>
+    </nav>
+    <div class="nav__status"><i class="dot"></i> Coming Soon</div>
+    <button class="nav__burger" aria-label="Menu"><span></span><span></span></button>
+  </header>
+  <div class="menu">
+    <a href="#home">Home</a>
+    <a href="#about">About</a>
+    <a href="#exhibition">Showcase</a>
+    <a href="#auctions">Events</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#host">Take the <em>Stage</em></a>
+  </div>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero" id="home">
+      <div class="hero__ambient" id="heroAmbient" aria-hidden="true"></div>
+      <div class="hero__embers" id="heroEmbers" aria-hidden="true"></div>
+
+      <div class="hero__inner">
+        <div class="hero__figure" id="heroFigure">
+          <canvas id="figureCanvas" aria-label="Theyyam deity interactive particle artwork"></canvas>
+        </div>
+
+        <div class="hero__content">
+          <h1 class="hero__title">
+            <span class="line"><span>One Campus.</span></span>
+            <span class="line"><span>Endless <em>Expressions.</em></span></span>
+          </h1>
+          <p class="hero__sub fade-in">VAAGA'26.2.0 is the official Arts Day of College of Engineering Payyanur.<br />Dance, music, theatre and colour, all on one stage.</p>
+          <a href="#host" class="link-arrow fade-in">Claim Your Spotlight <i>↗</i></a>
+        </div>
+      </div>
+
+      <div class="hero__scroll fade-in"><span>Scroll</span><i></i></div>
+    </section>
+
+    <!-- ABOUT -->
+    <!-- Video-led: short intro, then a pinned reel that grows to fill the stage as you scroll -->
+    <section class="about" id="about">
+      <div class="about__intro">
+        <p class="about__label small" data-reveal><span>(01)</span> The Arts Day of CETP</p>
+        <h2 class="h2 about__title" data-split>About <em>VAAGA</em></h2>
+        <p class="about__lead" data-reveal>Once a year, the engineers and architects of CETP put their lab records and drafting sheets away and pick up chilankas, microphones and paintbrushes. <span class="muted">VAAGA is a celebration of every beat, brushstroke and verse our campus has been saving for this stage.</span></p>
+      </div>
+
+      <div class="about__reel" id="aboutReel">
+        <div class="about__pin">
+          <canvas class="about__glow" id="aboutGlow" width="40" height="46" aria-hidden="true"></canvas>
+          <span class="about__word about__word--l" aria-hidden="true">Tradition</span>
+          <span class="about__word about__word--r" aria-hidden="true"><em>Reinvention</em></span>
+          <figure class="about__frame" id="aboutFrame" data-cursor="Sound on">
+            <video id="aboutVideo" src="videos/vaaga-reel.mp4" poster="images/vaaga-reel-poster.jpg" muted loop playsinline preload="metadata" aria-label="Performers in festive costume walking the ramp on the CETP main stage"></video>
+            <figcaption class="about__cap">
+              <span><i class="dot"></i> Live from the CETP stage</span>
+              <button class="about__sound" id="aboutSound" type="button" aria-pressed="false">
+                <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Sound off</b>
+              </button>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+
+      <div class="about__outro">
+        <p class="about__note muted" data-reveal>Version 26.2.0 goes further. It draws on the Theyyam heartland we call home and brings those roots together with the sound of a new generation, so tradition and reinvention share one spotlight.</p>
+        <div class="stats" data-reveal>
+          <div><strong data-count="50">0</strong><span>+ Events</span></div>
+          <div><strong data-count="6">0</strong><span>Departments, One Stage</span></div>
+          <div><strong data-count="1">0</strong><span>Unforgettable Day</span></div>
+        </div>
+        <a href="#auctions" class="link-arrow about__more" data-reveal>Explore Events <i>↗</i></a>
+      </div>
+    </section>
+
+    <!-- SHOWCASE -->
+    <section class="expo section" id="exhibition">
+      <div class="expo__left">
+        <h2 class="h2" data-split>The Main <em>Stage</em></h2>
+        <div class="expo__artists" data-reveal>
+          <h4>The Contenders</h4>
+          <p>CSE, ECE, EEE, ME, IT and the Department of Architecture (B.Arch). Six departments with one crown at stake and no one holding back.</p>
+          <div class="avatars">
+            <img src="images/estrella-11.jpg" alt="Team CSE" title="Team CSE" />
+            <img src="images/estrella-06.jpg" alt="Team ECE" title="Team ECE" />
+            <img src="images/estrella-05.jpg" alt="Team EEE" title="Team EEE" />
+            <img src="images/estrella-08.jpg" alt="Team ME" title="Team ME" />
+            <img src="images/estrella-02.jpg" alt="Team IT" title="Team IT" />
+            <img src="images/estrella-04.jpg" alt="Team B.Arch" title="Team B.Arch" />
+          </div>
+        </div>
+      </div>
+
+      <div class="expo__media img-reveal" data-cursor="Enter">
+        <img data-speed="-0.08" src="images/theyyam-dancer.webp" alt="A dancer in Theyyam-inspired costume and makeup performing on stage" />
+      </div>
+
+      <div class="expo__right">
+        <a href="#auctions" class="link-arrow" data-reveal>See All Events <i>↗</i></a>
+        <div class="expo__info" data-reveal>
+          <h3>From Theyyam to Techno</h3>
+          <time>Date to be announced · CETP Campus</time>
+          <p>A full day of performance that moves from Thiruvathira and Oppana to beatbox, fusion bands and street dance. It honours where we come from while making room for what comes next.</p>
+          <a href="#host" class="link-arrow">Register Now <i>↗</i></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- EVENTS -->
+    <section class="auctions section" id="auctions">
+      <div class="auctions__head">
+        <h2 class="h2" data-split>On &amp; Off <em>Stage</em></h2>
+        <p class="small muted" data-reveal>From classical footwork to spoken word,<br />pick your stage and find your people.</p>
+      </div>
+
+      <div class="carousel" id="carousel">
+        <div class="carousel__track" id="track"></div>
+      </div>
+
+      <div class="carousel__nav">
+        <button class="arrow" id="prev" aria-label="Previous">←</button>
+        <div class="carousel__progress"><i id="progress"></i></div>
+        <button class="arrow" id="next" aria-label="Next">→</button>
+      </div>
+    </section>
+
+    <!-- GALLERY (pinned while each pair of photos wipes in over the last) -->
+    <section class="gallery" id="gallery" style="--n:6">
+      <div class="gallery__pin">
+        <div class="gallery__head">
+          <h2 class="h2" data-split>Moments from <em>VAAGA</em></h2>
+          <div class="gallery__count"><span id="galleryIdx">01</span> / 06</div>
+        </div>
+        <div class="gallery__stage">
+          <div class="gallery__copy">
+            <p class="small muted">Arts Day, through the lens</p>
+            <div class="gallery__texts">
+              <div class="gallery__text is-active">
+                <h3>The lights go up</h3>
+                <p>Opening night on the main stage. The rig comes alive, the first voice finds the mic, and a campus forgets it has classes tomorrow.</p>
+              </div>
+              <div class="gallery__text">
+                <h3>Own the floor</h3>
+                <p>Mundus hitched, shades on, sequins catching every light. The dance crews didn't just perform on the floor, they took it.</p>
+              </div>
+              <div class="gallery__text">
+                <h3>Sing it back</h3>
+                <p>A duet that turned the auditorium into a choir. Two voices on stage and a few hundred more singing along from the seats.</p>
+              </div>
+              <div class="gallery__text">
+                <h3>Colour everywhere</h3>
+                <p>Crimson on the ramp, red satin under the lasers. Arts Day has never done quiet colours.</p>
+              </div>
+              <div class="gallery__text">
+                <h3>Every corner a stage</h3>
+                <p>A classical solo under the main rig, a jersey-clad crew in the courtyard. Some of the best moments never needed a spotlight.</p>
+              </div>
+              <div class="gallery__text">
+                <h3>Fire and roots</h3>
+                <p>The Theyyam tribute that closed the night, then the honours. Crimson, flame and drums, and a stage that remembered where it all began.</p>
+              </div>
+            </div>
+            <ol class="gallery__list">
+              <li class="is-active">The lights go up</li>
+              <li>Own the floor</li>
+              <li>Sing it back</li>
+              <li>Colour everywhere</li>
+              <li>Every corner a stage</li>
+              <li>Fire and roots</li>
+            </ol>
+          </div>
+          <!-- Each moment is a pair: a wide shot (--a) and a tall one (--b); odd pairs swap sides -->
+          <div class="gallery__frame" data-cursor="View">
+            <div class="gallery__item">
+              <figure class="gallery__fig gallery__fig--a"><img src="images/solo-singer-black-shirt.png" alt="A singer in a black shirt performing under purple stage lights" /></figure>
+              <figure class="gallery__fig gallery__fig--b"><img src="images/estrella-03.jpg" alt="The main stage rig lit up on opening night" /></figure>
+            </div>
+            <div class="gallery__item">
+              <figure class="gallery__fig gallery__fig--a"><img src="images/group-dance-mundu.png" alt="Three dancers in black shirts, mundus and sunglasses on a red-lit stage" loading="lazy" /></figure>
+              <figure class="gallery__fig gallery__fig--b"><img src="images/dance-retro-sequin.png" alt="A dancer in a sequin shirt and green shades mid-move" loading="lazy" /></figure>
+            </div>
+            <div class="gallery__item">
+              <figure class="gallery__fig gallery__fig--a"><img src="images/duet-singing-stage.png" alt="Two students singing a duet on stage" loading="lazy" /></figure>
+              <figure class="gallery__fig gallery__fig--b"><img src="images/estrella-07.jpg" alt="Students in the audience smiling during a performance" loading="lazy" /></figure>
+            </div>
+            <div class="gallery__item">
+              <figure class="gallery__fig gallery__fig--a"><img src="images/dance-solo-red-dress.png" alt="A dancer in a red satin dress under blue stage lights" loading="lazy" /></figure>
+              <figure class="gallery__fig gallery__fig--b"><img src="images/estrella-10.jpg" alt="A model in a red and gold lehenga on the ramp" loading="lazy" /></figure>
+            </div>
+            <div class="gallery__item">
+              <figure class="gallery__fig gallery__fig--a"><img src="images/estrella-01.jpg" alt="Students in football jerseys dancing in the courtyard" loading="lazy" style="object-position: 50% 58%" /></figure>
+              <figure class="gallery__fig gallery__fig--b"><img src="images/estrella-12.jpg" alt="A classical dancer performing a solo on the main stage" loading="lazy" /></figure>
+            </div>
+            <div class="gallery__item">
+              <figure class="gallery__fig gallery__fig--a"><img src="images/award-ceremony.webp" alt="Guests and faculty on stage during the award ceremony" loading="lazy" /></figure>
+              <figure class="gallery__fig gallery__fig--b"><img src="images/estrella-09.jpg" alt="Theyyam tribute performers in red costume and headdresses" loading="lazy" /></figure>
+            </div>
+          </div>
+        </div>
+        <div class="gallery__bar"><i id="galleryBar"></i></div>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section class="host section" id="host">
+      <div class="host__img host__img--1" data-speed="0.12"><img src="images/estrella-02.jpg" alt="" /></div>
+      <div class="host__img host__img--2" data-speed="-0.1"><img src="images/estrella-03.jpg" alt="" /></div>
+      <div class="host__img host__img--3" data-speed="0.18"><img src="images/estrella-07.jpg" alt="" /></div>
+
+      <div class="host__content">
+        <p class="small muted" data-reveal>Rehearsed in hostel corridors, ready for the lights?</p>
+        <h2 class="host__title" data-split>Your Stage Awaits at <em>VAAGA</em></h2>
+        <a href="#" class="btn-pill" data-reveal data-magnetic><span>Register Now</span> <i>↗</i></a>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer__top">
+      <span>⌖ College of Engineering Payyanur, Kannur, Kerala</span>
+      <span>◷ VAAGA'26.2.0 · Official Arts Day of CETP</span>
+      <span class="footer__social"><a href="#">◎ Instagram</a><a href="#">✉ Contact the Arts Club</a></span>
+    </div>
+    <div class="footer__word" id="footerWord" aria-label="VAAGA'26">
+      <span>V</span><span>A</span><span>A</span><span>G</span><span>A</span><span>'</span><span>2</span><span>6</span>
+    </div>
+    <div class="footer__bottom">
+      <a href="#">Rules &amp; Guidelines</a>
+      <span>© 2026 VAAGA · College of Engineering Payyanur · Designed by <a href="https://www.instagram.com/sahalck_/" class="footer__credit" target="_blank" rel="noopener noreferrer" aria-label="Designed by Sahal CK (opens Instagram in a new tab)">Sahal CK <i>↗</i></a></span>
+      <a href="#">Code of Conduct</a>
+    </div>
+  </footer>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

@@ -9,18 +9,18 @@ export default function Showcase() {
           <h4>The Contenders</h4>
           <p>CSE, ECE, EEE, ME, IT and the Department of Architecture (B.Arch). Six departments with one crown at stake and no one holding back.</p>
           <div className="avatars">
-            <img src="/images/estrella-11.jpg" alt="Team CSE" title="Team CSE" />
-            <img src="/images/estrella-06.jpg" alt="Team ECE" title="Team ECE" />
-            <img src="/images/estrella-05.jpg" alt="Team EEE" title="Team EEE" />
-            <img src="/images/estrella-08.jpg" alt="Team ME" title="Team ME" />
-            <img src="/images/estrella-02.jpg" alt="Team IT" title="Team IT" />
-            <img src="/images/estrella-04.jpg" alt="Team B.Arch" title="Team B.Arch" />
+            <img src="/images/estrella-11.jpg" alt="Team CSE" title="Team CSE" loading="lazy" decoding="async" />
+            <img src="/images/estrella-06.jpg" alt="Team ECE" title="Team ECE" loading="lazy" decoding="async" />
+            <img src="/images/estrella-05.jpg" alt="Team EEE" title="Team EEE" loading="lazy" decoding="async" />
+            <img src="/images/estrella-08.jpg" alt="Team ME" title="Team ME" loading="lazy" decoding="async" />
+            <img src="/images/estrella-02.jpg" alt="Team IT" title="Team IT" loading="lazy" decoding="async" />
+            <img src="/images/estrella-04.jpg" alt="Team B.Arch" title="Team B.Arch" loading="lazy" decoding="async" />
           </div>
         </div>
       </div>
 
       <div className="expo__media img-reveal in" data-cursor="Enter">
-        <img data-speed="-0.08" src="/images/theyyam-dancer.webp" alt="A dancer in Theyyam-inspired costume and makeup performing on stage" />
+        <img data-speed="-0.08" src="/images/theyyam-dancer.webp" alt="A dancer in Theyyam-inspired costume and makeup performing on stage" loading="lazy" decoding="async" />
       </div>
 
       <div className="expo__right">

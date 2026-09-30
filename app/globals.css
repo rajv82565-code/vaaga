@@ -502,6 +502,19 @@ body.is-ready .hero__scroll { transform: translateX(-50%); }
   .nav { grid-template-columns: 1fr auto; padding: 12px 16px; }
   .nav__links, .nav__status { display: none; }
   .nav__burger { display: block; }
+  .nav.is-scrolled {
+    background: rgba(5, 5, 5, 0.94);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 1px solid rgba(243, 241, 236, 0.08);
+  }
+
+  /* Optimize off-screen layout and GPU rendering on mobile devices */
+  .about, .expo, .auctions, .gallery, .host {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 700px;
+  }
+
   .hero {
     position: relative;
     height: 100svh;
@@ -540,6 +553,12 @@ body.is-ready .hero__scroll { transform: translateX(-50%); }
     pointer-events: auto;
     filter: none;
     will-change: opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  .hero__embers {
+    will-change: transform;
+    transform: translateZ(0);
   }
   .hero__embers::after {
     display: none;
@@ -551,6 +570,7 @@ body.is-ready .hero__scroll { transform: translateX(-50%); }
     width: 100%;
     height: 100%;
     display: block;
+    touch-action: pan-y;
   }
   .hero__content {
     position: relative;
@@ -810,3 +830,191 @@ body.is-ready .hero__scroll { transform: translateX(-50%); }
   .nav-switcher__dot  { width: 8px; height: 8px; }
 }
 
+
+.menu__switcher-wrap {
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(243, 241, 236, 0.08);
+}
+
+
+/* ── Apple Matte Switcher with Sliding Glider ────────────────────────── */
+.nav-switcher,
+.apple-matte-switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 3px;
+  background: rgba(18, 20, 26, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 9999px;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.4);
+  user-select: none;
+  pointer-events: auto;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.nav-switcher:hover,
+.apple-matte-switcher:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 
+    0 12px 28px -4px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+
+.nav-switcher__glider,
+.switcher-glider {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.07) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease;
+  will-change: transform;
+}
+
+.nav-switcher__glider--yukthi,
+.switcher-glider.glider-yukthi {
+  transform: translateX(0);
+}
+
+.nav-switcher__glider--vaaga,
+.switcher-glider.glider-vaaga {
+  transform: translateX(calc(100%));
+}
+
+.nav-switcher__item,
+.switcher-tab {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1 1 50%;
+  min-width: 76px;
+  height: 100%;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 9999px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.58);
+  transition: color 0.25s ease, transform 0.15s ease;
+  white-space: nowrap;
+  outline: none;
+  line-height: 1;
+}
+
+@media (min-width: 640px) {
+  .nav-switcher__item,
+  .switcher-tab {
+    min-width: 82px;
+    padding: 0 14px;
+    font-size: 0.75rem;
+  }
+}
+
+.nav-switcher__item:hover,
+.switcher-tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.nav-switcher__item:active,
+.switcher-tab:active {
+  transform: scale(0.96);
+}
+
+.nav-switcher__item--active,
+.switcher-tab.is-active {
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.nav-switcher__dot,
+.tab-indicator {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+}
+
+.dot-yukthi,
+.nav-switcher__dot--yukthi {
+  background: #ff7a3d;
+  box-shadow: 0 0 4px rgba(255, 122, 61, 0.4);
+  opacity: 0.75;
+}
+
+.switcher-tab.is-active .dot-yukthi,
+.nav-switcher__item--active .nav-switcher__dot--yukthi {
+  background: #f59e0b;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.95), 0 0 4px #f59e0b;
+  opacity: 1;
+  transform: scale(1.18);
+}
+
+.dot-vaaga,
+.nav-switcher__dot--vaaga {
+  background: #a855f7;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.65);
+  opacity: 0.75;
+}
+
+.switcher-tab.is-active .dot-vaaga,
+.nav-switcher__item--active .nav-switcher__dot--vaaga {
+  background: #a3e635;
+  box-shadow: 0 0 12px rgba(163, 230, 53, 0.95), 0 0 4px #a3e635;
+  opacity: 1;
+  transform: scale(1.18);
+}
+
+.switcher-arrow,
+.external-arrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 3px;
+  opacity: 0.65;
+  transform: translateY(0);
+  transition: opacity 0.2s ease, transform 0.2s ease, max-width 0.2s ease, margin 0.2s ease;
+  max-width: 14px;
+}
+
+.nav-switcher__item:hover .switcher-arrow,
+.switcher-tab:hover .external-arrow {
+  opacity: 0.95;
+  transform: translate(1px, -1px);
+}
+
+.nav-switcher__item--active .switcher-arrow {
+  opacity: 0;
+  max-width: 0;
+  margin-left: 0;
+  pointer-events: none;
+}

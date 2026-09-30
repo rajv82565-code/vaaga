@@ -26,6 +26,7 @@ export default function ScrollReveal() {
       walk(el);
     });
 
+    const isMobile = window.innerWidth <= 900 || window.matchMedia("(hover: none)").matches;
     // Reveal on scroll IntersectionObserver
     const io = new IntersectionObserver(
       (entries) => {
@@ -36,7 +37,10 @@ export default function ScrollReveal() {
           io.unobserve(e.target);
         });
       },
-      { threshold: 0.15, rootMargin: "0px 0px -8% 0px" }
+      {
+        threshold: isMobile ? 0.05 : 0.12,
+        rootMargin: isMobile ? "0px 0px 60px 0px" : "0px 0px -8% 0px",
+      }
     );
 
     document.querySelectorAll("[data-split], [data-reveal]").forEach((el) => io.observe(el));

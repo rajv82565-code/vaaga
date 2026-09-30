@@ -132,7 +132,8 @@
     let rawPts = [];
     let stars = [];
     let fw = 0, fh = 0;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const isMobile = window.innerWidth <= 900 || touch;
+    const dpr = isMobile ? 1 : Math.min(devicePixelRatio || 1, 1.5);
     let ready = false;
     let assembleStart = 0;
     const ASSEMBLE_MS = 2200;
@@ -142,24 +143,23 @@
 
     const makeStars = () => {
       stars = [];
-      const count = Math.floor((fw * fh) / 9000);
+      const count = isMobile ? 18 : Math.floor((fw * fh) / 9000);
       for (let i = 0; i < count; i++) {
         stars.push({
           x: Math.random() * fw,
           y: Math.random() * fh,
-          r: Math.random() * 1.4 + 0.3,
+          r: isMobile ? Math.random() * 1.2 + 0.5 : Math.random() * 1.4 + 0.3,
           base: Math.random() * 0.5 + 0.15,
           speed: Math.random() * 0.02 + 0.005,
           phase: Math.random() * Math.PI * 2,
-          big: Math.random() < 0.02,
+          big: Math.random() < 0.03,
         });
       }
     };
 
     const sampleImage = () => {
-      const isMobile = window.innerWidth <= 900;
       const off = document.createElement("canvas");
-      const targetW = isMobile ? 190 : 340;
+      const targetW = isMobile ? 110 : 340;
       const scale = targetW / portrait.naturalWidth;
       const targetH = Math.round(portrait.naturalHeight * scale);
       off.width = targetW;
@@ -174,7 +174,7 @@
         return [];
       }
 
-      const pts = [];
+      let pts = [];
       const step = isMobile ? 2 : 1;
       for (let y = 0; y < targetH; y += step) {
         for (let x = 0; x < targetW; x += step) {
@@ -182,11 +182,17 @@
           const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
           const lum = 0.299 * r + 0.587 * g + 0.114 * b;
           if (a < 40 || lum < 14) continue;
-          const skipProb = lum < 45 ? (isMobile ? 0.45 : 0.35) : (isMobile ? 0.15 : 0.06);
+          const skipProb = lum < 45 ? (isMobile ? 0.70 : 0.35) : (isMobile ? 0.35 : 0.06);
           if (Math.random() < skipProb) continue;
           pts.push({ u: x / targetW, v: y / targetH, r, g, b, lum });
         }
       }
+
+      if (isMobile && pts.length > 850) {
+        const stride = Math.ceil(pts.length / 850);
+        pts = pts.filter((_, idx) => idx % stride === 0);
+      }
+
       return pts;
     };
 
@@ -195,7 +201,6 @@
       if (!rawPts.length) rawPts = sampleImage();
       if (!rawPts.length) return;
 
-      const isMobile = window.innerWidth <= 900;
       const targetH = isMobile ? Math.min(fh * 0.90, fw * 1.65) : fh * 0.90;
       const aspect = portrait.naturalWidth / (portrait.naturalHeight || 1);
       const targetW = targetH * aspect;
@@ -207,12 +212,14 @@
       particles = rawPts.map((p) => {
         const px = offsetX + p.u * targetW;
         const py = offsetY + p.v * targetH;
+        const pSize = isMobile ? (Math.random() * 1.1 + 0.85) : (Math.random() * 1.05 + 0.45);
         return {
           tx: px,
           ty: py,
           x: fw / 2 + (Math.random() - 0.5) * fw * 1.4,
           y: fh / 2 + (Math.random() - 0.5) * fh * 1.4,
-          size: Math.random() * 1.05 + 0.45,
+          size: pSize,
+          halfSize: pSize * 0.5,
           color: `rgb(${p.r},${p.g},${p.b})`,
           r: p.r,
           g: p.g,
@@ -220,7 +227,7 @@
           lum: p.lum,
           phase: Math.random() * Math.PI * 2,
           speed: Math.random() * 0.015 + 0.006,
-          drift: Math.random() * 2.0 + 0.5,
+          drift: isMobile ? (Math.random() * 1.4 + 0.4) : (Math.random() * 2.0 + 0.5),
           twinkleSpeed: Math.random() * 0.03 + 0.01,
         };
       });
@@ -234,8 +241,8 @@
       fw = rect.width;
       fh = rect.height;
       if (!fw || !fh) return;
-      figureCanvas.width = fw * dpr;
-      figureCanvas.height = fh * dpr;
+      figureCanvas.width = Math.round(fw * dpr);
+      figureCanvas.height = Math.round(fh * dpr);
       figureCanvas.style.width = fw + "px";
       figureCanvas.style.height = fh + "px";
       fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -277,14 +284,16 @@
     const originalColor = (p) => `rgba(${p.r},${p.g},${p.b},0.92)`;
 
     figureLoopFn = (now) => {
-      if (!ready || !fw || !particles.length) return;
+      if (!ready || !fw || !particles.length || scrollY > vh * 1.1) return;
       tFrame++;
       const elapsed = now - assembleStart;
       const prog = reduced ? 1 : Math.min(1, elapsed / ASSEMBLE_MS);
       const ease = 1 - Math.pow(1 - prog, 3);
 
-      pmx = lerp(pmx, mouse.nx * 14, 0.05);
-      pmy = lerp(pmy, mouse.ny * 10, 0.05);
+      if (!isMobile) {
+        pmx = lerp(pmx, mouse.nx * 14, 0.05);
+        pmy = lerp(pmy, mouse.ny * 10, 0.05);
+      }
 
       fctx.clearRect(0, 0, fw, fh);
 
@@ -295,33 +304,53 @@
       fctx.fillStyle = grad;
       fctx.fillRect(0, 0, fw, fh);
 
-      // Twinkling stars
+      // Batch render stars with single draw path
+      fctx.fillStyle = "rgba(255, 230, 200, 0.7)";
+      fctx.beginPath();
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
-        const tw = s.base + Math.sin(tFrame * s.speed + s.phase) * 0.25;
-        fctx.beginPath();
-        fctx.fillStyle = s.big ? `rgba(255, 150, 90, ${Math.max(0, tw).toFixed(2)})` : `rgba(255, 255, 255, ${Math.max(0, tw).toFixed(2)})`;
-        const r = s.big ? s.r * 2.2 : s.r;
-        fctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-        fctx.fill();
+        const r = s.big ? s.r * 1.8 : s.r;
+        if (isMobile) {
+          fctx.rect(s.x, s.y, r * 1.4, r * 1.4);
+        } else {
+          fctx.moveTo(s.x + r, s.y);
+          fctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+        }
       }
+      fctx.fill();
 
-      // Deity particles - exact demo formulation
-      fctx.save();
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        const cx = p.x + (p.tx - p.x) * ease + pmx * ease;
-        const cy = p.y + (p.ty - p.y) * ease + pmy * ease;
-        const wobbleX = Math.sin(tFrame * p.speed + p.phase) * p.drift * ease;
-        const wobbleY = Math.cos(tFrame * p.speed * 1.3 + p.phase) * p.drift * ease;
-        const flick = 0.6 + Math.sin(tFrame * p.twinkleSpeed + p.phase) * 0.4;
-        fctx.globalAlpha = Math.max(0.05, flick) * (0.4 + 0.6 * ease);
-        fctx.fillStyle = colorMode === "theme" ? themeColor(p) : originalColor(p);
-        fctx.beginPath();
-        fctx.arc(cx + wobbleX, cy + wobbleY, p.size, 0, Math.PI * 2);
-        fctx.fill();
+      // Deity particles
+      const numParticles = particles.length;
+      if (isMobile) {
+        for (let i = 0; i < numParticles; i++) {
+          const p = particles[i];
+          const cx = p.x + (p.tx - p.x) * ease;
+          const cy = p.y + (p.ty - p.y) * ease;
+          const wobbleX = Math.sin(tFrame * p.speed + p.phase) * p.drift * ease;
+          const wobbleY = Math.cos(tFrame * p.speed * 1.3 + p.phase) * p.drift * ease;
+          const flick = 0.6 + Math.sin(tFrame * p.twinkleSpeed + p.phase) * 0.4;
+          fctx.globalAlpha = Math.max(0.1, flick) * (0.4 + 0.6 * ease);
+          fctx.fillStyle = colorMode === "theme" ? themeColor(p) : p.color;
+          fctx.fillRect(cx + wobbleX - p.halfSize, cy + wobbleY - p.halfSize, p.size, p.size);
+        }
+      } else {
+        fctx.save();
+        for (let i = 0; i < numParticles; i++) {
+          const p = particles[i];
+          const cx = p.x + (p.tx - p.x) * ease + pmx * ease;
+          const cy = p.y + (p.ty - p.y) * ease + pmy * ease;
+          const wobbleX = Math.sin(tFrame * p.speed + p.phase) * p.drift * ease;
+          const wobbleY = Math.cos(tFrame * p.speed * 1.3 + p.phase) * p.drift * ease;
+          const flick = 0.6 + Math.sin(tFrame * p.twinkleSpeed + p.phase) * 0.4;
+          fctx.globalAlpha = Math.max(0.05, flick) * (0.4 + 0.6 * ease);
+          fctx.fillStyle = colorMode === "theme" ? themeColor(p) : originalColor(p);
+          fctx.beginPath();
+          fctx.arc(cx + wobbleX, cy + wobbleY, p.size, 0, Math.PI * 2);
+          fctx.fill();
+        }
+        fctx.restore();
       }
-      fctx.restore();
+      fctx.globalAlpha = 1;
     };
 
     let figResizeQueued = false;
@@ -458,7 +487,7 @@
     const inView = smoothY > rl.top - vh && smoothY < rl.top + rl.run + vh;
     const p = reduced ? 1 : clamp((smoothY - start) / (vh * 0.5 + rl.run * 0.6), 0, 1);
 
-    if (inView && !video.paused && t - glowT > 66) { // ~15fps is plenty for a blurred glow
+    if (!touch && inView && !video.paused && t - glowT > 80) { // skip on mobile to prevent GPU video stall
       glowT = t;
       gctx.drawImage(video, 0, 0, glow.width, glow.height);
     }

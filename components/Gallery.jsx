@@ -64,23 +64,35 @@ export default function Gallery() {
     if (!gallery || !bar) return;
 
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+    const isMobile = window.innerWidth <= 900 || window.matchMedia("(hover: none)").matches;
 
     let galLast = -1;
-    let rafId = null;
     let inView = false;
+    let galTop = 0;
+    let galRun = 1;
+    let vh = window.innerHeight;
 
-    const tick = () => {
-      if (!inView) {
-        rafId = null;
-        return;
-      }
+    // Pre-cache DOM elements once instead of calling querySelectorAll on every scroll frame
+    const cachedItems = itemsRef.current.map((el) => {
+      if (!el) return null;
+      const figs = Array.from(el.querySelectorAll(".gallery__fig")).map((f) => ({
+        el: f,
+        img: f.querySelector("img"),
+      }));
+      return { el, figs };
+    });
 
-      const vh = window.innerHeight;
-      const sy = window.scrollY;
+    const measureGallery = () => {
+      vh = window.innerHeight;
       const gr = gallery.getBoundingClientRect();
-      const top = gr.top + sy;
-      const run = Math.max(1, gr.height - vh);
-      const p = clamp((sy - top) / run, 0, 1);
+      galTop = gr.top + window.scrollY;
+      galRun = Math.max(1, gr.height - vh);
+    };
+    measureGallery();
+
+    const updateGallery = () => {
+      const sy = window.scrollY;
+      const p = clamp((sy - galTop) / galRun, 0, 1);
 
       if (Math.abs(p - galLast) >= 0.0005) {
         galLast = p;
@@ -89,50 +101,79 @@ export default function Gallery() {
         const k = Math.min(n - 2, Math.floor(raw));
         const w = clamp((raw - k - 0.15) / 0.7, 0, 1);
         const pos = k + w * w * (3 - 2 * w);
+        const currentShown = Math.min(n - 1, Math.round(pos));
 
-        itemsRef.current.forEach((el, i) => {
-          if (!el) return;
+        cachedItems.forEach((item, i) => {
+          if (!item) return;
+
+          // On mobile, skip processing elements far outside the transition window
+          if (isMobile && Math.abs(i - currentShown) > 1) {
+            item.el.style.opacity = "0";
+            return;
+          }
+
           const t = i === 0 ? 1 : clamp(pos - (i - 1), 0, 1);
           const outP = clamp(pos - i, 0, 1);
-          el.style.transform = `scale(${(1 - outP * 0.05).toFixed(4)})`;
-          el.style.opacity = (1 - clamp((outP - 0.05) / 0.45, 0, 1)).toFixed(3);
+          item.el.style.transform = `scale(${(1 - outP * 0.05).toFixed(4)})`;
+          item.el.style.opacity = (1 - clamp((outP - 0.05) / 0.45, 0, 1)).toFixed(3);
 
-          const figs = el.querySelectorAll(".gallery__fig");
-          figs.forEach((f, j) => {
+          item.figs.forEach((fig, j) => {
             const inP = i === 0 ? 1 : clamp((t - j * 0.22) / 0.78, 0, 1);
             const r = ((1 - inP) * 100).toFixed(2);
             if (i > 0) {
-              f.style.clipPath = j ? `inset(0 0 ${r}% 0)` : `inset(${r}% 0 0 0)`;
+              fig.el.style.clipPath = j ? `inset(0 0 ${r}% 0)` : `inset(${r}% 0 0 0)`;
             }
-            const img = f.querySelector("img");
-            if (img) {
-              img.style.transform = `scale(${(1.18 - inP * 0.18 + outP * 0.04).toFixed(4)})`;
+            if (fig.img) {
+              fig.img.style.transform = `scale(${(1.18 - inP * 0.18 + outP * 0.04).toFixed(4)})`;
             }
           });
         });
 
         bar.style.transform = `scaleX(${p.toFixed(4)})`;
-        const shown = Math.min(n - 1, Math.round(pos));
-        setActiveIdx(shown);
+        setActiveIdx(currentShown);
       }
-
-      rafId = requestAnimationFrame(tick);
     };
+
+    let scrollTicking = false;
+    const onScroll = () => {
+      if (!inView) return;
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame(() => {
+          updateGallery();
+          scrollTicking = false;
+        });
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    let resizeTimer = null;
+    const onResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        measureGallery();
+        updateGallery();
+      }, 100);
+    };
+    window.addEventListener("resize", onResize, { passive: true });
 
     const galleryObserver = new IntersectionObserver(
       ([entry]) => {
         inView = entry.isIntersecting;
-        if (inView && !rafId) {
-          rafId = requestAnimationFrame(tick);
+        if (inView) {
+          measureGallery();
+          updateGallery();
         }
       },
-      { rootMargin: "250px 0px 250px 0px", threshold: 0 }
+      { rootMargin: "150px 0px 150px 0px", threshold: 0 }
     );
     galleryObserver.observe(gallery);
 
     return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      clearTimeout(resizeTimer);
       galleryObserver.disconnect();
-      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -173,10 +214,10 @@ export default function Gallery() {
                 ref={(el) => (itemsRef.current[i] = el)}
               >
                 <figure className="gallery__fig gallery__fig--a">
-                  <img src={m.imgA} alt={m.altA} loading="lazy" />
+                  <img src={m.imgA} alt={m.altA} loading="lazy" decoding="async" />
                 </figure>
                 <figure className="gallery__fig gallery__fig--b">
-                  <img src={m.imgB} alt={m.altB} loading="lazy" />
+                  <img src={m.imgB} alt={m.altB} loading="lazy" decoding="async" />
                 </figure>
               </div>
             ))}

@@ -26,20 +26,53 @@ export default function Events() {
     let drag = null;
     let moved = 0;
     let rafId = null;
+    let cachedMaxX = 0;
 
-    const maxX = () => Math.max(0, track.scrollWidth - carousel.clientWidth + 24);
-    const step = () => (track.children[0]?.getBoundingClientRect().width || 300) + 10;
+    const updateMaxX = () => {
+      cachedMaxX = Math.max(0, track.scrollWidth - carousel.clientWidth + 24);
+    };
+    updateMaxX();
+
+    const maxX = () => cachedMaxX;
+    const step = () => (track.children[0]?.clientWidth || 280) + 12;
 
     const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
+    const requestTick = () => {
+      if (!rafId) {
+        rafId = requestAnimationFrame(loop);
+      }
+    };
+
+    const loop = () => {
+      if (Math.abs(tx - cx) >= 0.05) {
+        cx += (tx - cx) * 0.12;
+        track.style.transform = `translate3d(${-cx.toFixed(1)}px,0,0)`;
+        const m = maxX() || 1;
+        progress.style.transform = `scaleX(${0.2 + 0.8 * clamp(cx / m, 0, 1)})`;
+        rafId = requestAnimationFrame(loop);
+      } else {
+        cx = tx;
+        track.style.transform = `translate3d(${-cx.toFixed(1)}px,0,0)`;
+        const m = maxX() || 1;
+        progress.style.transform = `scaleX(${0.2 + 0.8 * clamp(cx / m, 0, 1)})`;
+        rafId = null; // Sleep when settled to free 100% of mobile CPU/GPU
+      }
+    };
+
     const onNext = () => {
+      updateMaxX();
       tx = clamp(tx + step(), 0, maxX());
+      requestTick();
     };
     const onPrev = () => {
+      updateMaxX();
       tx = clamp(tx - step(), 0, maxX());
+      requestTick();
     };
 
     const onPointerDown = (e) => {
+      updateMaxX();
       drag = { x: e.clientX, start: tx };
       moved = 0;
       carousel.classList.add("is-drag");
@@ -50,6 +83,7 @@ export default function Events() {
       if (!drag) return;
       moved = Math.abs(e.clientX - drag.x);
       tx = clamp(drag.start - (e.clientX - drag.x) * 1.3, -80, maxX() + 80);
+      requestTick();
     };
 
     const endDrag = () => {
@@ -57,6 +91,7 @@ export default function Events() {
       drag = null;
       carousel.classList.remove("is-drag");
       tx = clamp(tx, 0, maxX());
+      requestTick();
     };
 
     const onClick = (e) => {
@@ -74,16 +109,11 @@ export default function Events() {
     if (prevBtn) prevBtn.addEventListener("click", onPrev);
     if (nextBtn) nextBtn.addEventListener("click", onNext);
 
-    const loop = () => {
-      if (Math.abs(tx - cx) >= 0.05) {
-        cx += (tx - cx) * 0.1;
-        track.style.transform = `translate3d(${-cx}px,0,0)`;
-        const m = maxX() || 1;
-        progress.style.transform = `scaleX(${0.2 + 0.8 * clamp(cx / m, 0, 1)})`;
-      }
-      rafId = requestAnimationFrame(loop);
+    const onResize = () => {
+      updateMaxX();
+      requestTick();
     };
-    rafId = requestAnimationFrame(loop);
+    window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
       carousel.removeEventListener("pointerdown", onPointerDown);
@@ -91,9 +121,10 @@ export default function Events() {
       carousel.removeEventListener("pointerup", endDrag);
       carousel.removeEventListener("pointercancel", endDrag);
       carousel.removeEventListener("click", onClick, true);
+      window.removeEventListener("resize", onResize);
       if (prevBtn) prevBtn.removeEventListener("click", onPrev);
       if (nextBtn) nextBtn.removeEventListener("click", onNext);
-      cancelAnimationFrame(rafId);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -107,7 +138,7 @@ export default function Events() {
         </p>
       </div>
 
-      <div className="carousel" id="carousel" ref={carouselRef}>
+      <div className="carousel" id="carousel" ref={carouselRef} style={{ touchAction: "pan-y" }}>
         <div className="carousel__track" id="track" ref={trackRef}>
           {AUCTIONS.map((x, i) => (
             <article key={i} className="card" data-cursor="Join">
@@ -115,6 +146,7 @@ export default function Events() {
                 <img
                   alt={`${x.t}, ${x.a}`}
                   loading="lazy"
+                  decoding="async"
                   draggable="false"
                   src={`/images/estrella-${x.img}.jpg`}
                 />

@@ -13,14 +13,19 @@ export default function Navbar() {
 
     const onScroll = () => {
       if (!ticking) {
+        ticking = true;
         requestAnimationFrame(() => {
           const y = window.scrollY;
-          setIsScrolled(y > 40);
-          setIsHidden(y > lastY && y > window.innerHeight * 0.8 && !menuOpen);
-          lastY = y;
+          const scrolled = y > 40;
+          setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+
+          if (Math.abs(y - lastY) > 6) {
+            const hidden = y > lastY && y > window.innerHeight * 0.8 && !menuOpen;
+            setIsHidden((prev) => (prev !== hidden ? hidden : prev));
+            lastY = y;
+          }
           ticking = false;
         });
-        ticking = true;
       }
     };
 

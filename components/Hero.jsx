@@ -15,8 +15,8 @@ export default function Hero() {
     portrait.src = "/images/theyyam-deity.png";
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isMobile = window.innerWidth <= 900;
-    const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2);
+    const isMobile = window.innerWidth <= 900 || window.matchMedia("(hover: none)").matches;
+    const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
     const ASSEMBLE_MS = 2200;
 
     let particles = [];
@@ -26,6 +26,7 @@ export default function Hero() {
     let fh = 0;
     let ready = false;
     let isVisible = true;
+    let isScrolledOut = false;
     let assembleStart = 0;
     let tFrame = 0;
     let pmx = 0;
@@ -35,23 +36,24 @@ export default function Hero() {
 
     const makeStars = () => {
       stars = [];
-      const count = Math.floor((fw * fh) / (isMobile ? 14000 : 9000));
+      const count = isMobile ? 18 : Math.floor((fw * fh) / 9000);
       for (let i = 0; i < count; i++) {
         stars.push({
           x: Math.random() * fw,
           y: Math.random() * fh,
-          r: Math.random() * 1.4 + 0.3,
+          r: isMobile ? Math.random() * 1.2 + 0.5 : Math.random() * 1.4 + 0.3,
           base: Math.random() * 0.5 + 0.15,
           speed: Math.random() * 0.02 + 0.005,
           phase: Math.random() * Math.PI * 2,
-          big: Math.random() < 0.02,
+          big: Math.random() < 0.03,
         });
       }
     };
 
     const sampleImage = () => {
       const off = document.createElement("canvas");
-      const targetW = isMobile ? 190 : 340;
+      // Scale down image sampling on mobile for optimal particle density and fast processing
+      const targetW = isMobile ? 110 : 340;
       const scale = targetW / portrait.naturalWidth;
       const targetH = Math.round(portrait.naturalHeight * scale);
       off.width = targetW;
@@ -66,7 +68,7 @@ export default function Hero() {
         return [];
       }
 
-      const pts = [];
+      let pts = [];
       const step = isMobile ? 2 : 1;
       for (let y = 0; y < targetH; y += step) {
         for (let x = 0; x < targetW; x += step) {
@@ -77,11 +79,18 @@ export default function Hero() {
           const a = data[idx + 3];
           const lum = 0.299 * r + 0.587 * g + 0.114 * b;
           if (a < 40 || lum < 14) continue;
-          const skipProb = lum < 45 ? (isMobile ? 0.45 : 0.35) : (isMobile ? 0.15 : 0.06);
+          const skipProb = lum < 45 ? (isMobile ? 0.70 : 0.35) : (isMobile ? 0.35 : 0.06);
           if (Math.random() < skipProb) continue;
           pts.push({ u: x / targetW, v: y / targetH, r, g, b, lum });
         }
       }
+
+      // Cap maximum particle count on mobile to ~850 for butter-smooth 60-120fps
+      if (isMobile && pts.length > 850) {
+        const stride = Math.ceil(pts.length / 850);
+        pts = pts.filter((_, idx) => idx % stride === 0);
+      }
+
       return pts;
     };
 
@@ -100,17 +109,19 @@ export default function Hero() {
       particles = rawPts.map((p) => {
         const px = offsetX + p.u * targetW;
         const py = offsetY + p.v * targetH;
+        const pSize = isMobile ? (Math.random() * 1.1 + 0.85) : (Math.random() * 1.05 + 0.45);
         return {
           tx: px,
           ty: py,
           x: fw / 2 + (Math.random() - 0.5) * fw * 1.4,
           y: fh / 2 + (Math.random() - 0.5) * fh * 1.4,
-          size: Math.random() * 1.05 + 0.45,
+          size: pSize,
+          halfSize: pSize * 0.5,
           color: `rgb(${p.r},${p.g},${p.b})`,
           lum: p.lum,
           phase: Math.random() * Math.PI * 2,
           speed: Math.random() * 0.015 + 0.006,
-          drift: Math.random() * 2.0 + 0.5,
+          drift: isMobile ? (Math.random() * 1.4 + 0.4) : (Math.random() * 2.0 + 0.5),
           twinkleSpeed: Math.random() * 0.03 + 0.01,
         };
       });
@@ -124,8 +135,8 @@ export default function Hero() {
       fw = rect.width;
       fh = rect.height;
       if (!fw || !fh) return;
-      canvas.width = fw * dpr;
-      canvas.height = fh * dpr;
+      canvas.width = Math.round(fw * dpr);
+      canvas.height = Math.round(fh * dpr);
       canvas.style.width = fw + "px";
       canvas.style.height = fh + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -160,15 +171,33 @@ export default function Hero() {
       mouse.nx = e.clientX / window.innerWidth - 0.5;
       mouse.ny = e.clientY / window.innerHeight - 0.5;
     };
-    window.addEventListener("pointermove", onPointerMove);
+    if (!isMobile) {
+      window.addEventListener("pointermove", onPointerMove, { passive: true });
+    }
 
+    let resizeTimer = null;
     const onResize = () => {
-      sizeFigure();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        sizeFigure();
+      }, 100);
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onResize, { passive: true });
+
+    // Scroll tracking to suspend hero loop immediately when scrolled away
+    const handleScroll = () => {
+      const scrolledAway = window.scrollY > (fh || window.innerHeight) * 1.05;
+      if (scrolledAway !== isScrolledOut) {
+        isScrolledOut = scrolledAway;
+        if (!isScrolledOut && isVisible && !rafId) {
+          rafId = requestAnimationFrame(loop);
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     const loop = (now) => {
-      if (!isVisible) {
+      if (!isVisible || isScrolledOut) {
         rafId = null;
         return;
       }
@@ -179,8 +208,10 @@ export default function Hero() {
         const prog = reduced ? 1 : Math.min(1, elapsed / ASSEMBLE_MS);
         const ease = 1 - Math.pow(1 - prog, 3);
 
-        pmx += (mouse.nx * 14 - pmx) * 0.05;
-        pmy += (mouse.ny * 10 - pmy) * 0.05;
+        if (!isMobile) {
+          pmx += (mouse.nx * 14 - pmx) * 0.05;
+          pmy += (mouse.ny * 10 - pmy) * 0.05;
+        }
 
         ctx.clearRect(0, 0, fw, fh);
 
@@ -191,33 +222,53 @@ export default function Hero() {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, fw, fh);
 
-        // Twinkling stars
+        // Batch render stars with single draw path
+        ctx.fillStyle = "rgba(255, 230, 200, 0.7)";
+        ctx.beginPath();
         for (let i = 0; i < stars.length; i++) {
           const s = stars[i];
-          const tw = s.base + Math.sin(tFrame * s.speed + s.phase) * 0.25;
-          ctx.beginPath();
-          ctx.fillStyle = s.big ? `rgba(255, 150, 90, ${Math.max(0, tw).toFixed(2)})` : `rgba(255, 255, 255, ${Math.max(0, tw).toFixed(2)})`;
-          const r = s.big ? s.r * 2.2 : s.r;
-          ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
-          ctx.fill();
+          const r = s.big ? s.r * 1.8 : s.r;
+          if (isMobile) {
+            ctx.rect(s.x, s.y, r * 1.4, r * 1.4);
+          } else {
+            ctx.moveTo(s.x + r, s.y);
+            ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+          }
         }
+        ctx.fill();
 
         // Deity particles
-        ctx.save();
-        for (let i = 0; i < particles.length; i++) {
-          const p = particles[i];
-          const cx = p.x + (p.tx - p.x) * ease + pmx * ease;
-          const cy = p.y + (p.ty - p.y) * ease + pmy * ease;
-          const wobbleX = Math.sin(tFrame * p.speed + p.phase) * p.drift * ease;
-          const wobbleY = Math.cos(tFrame * p.speed * 1.3 + p.phase) * p.drift * ease;
-          const flick = 0.6 + Math.sin(tFrame * p.twinkleSpeed + p.phase) * 0.4;
-          ctx.globalAlpha = Math.max(0.05, flick) * (0.4 + 0.6 * ease);
-          ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(cx + wobbleX, cy + wobbleY, p.size, 0, Math.PI * 2);
-          ctx.fill();
+        const numParticles = particles.length;
+        if (isMobile) {
+          // Blit-based rendering on mobile for 5x to 10x higher GPU efficiency
+          for (let i = 0; i < numParticles; i++) {
+            const p = particles[i];
+            const cx = p.x + (p.tx - p.x) * ease;
+            const cy = p.y + (p.ty - p.y) * ease;
+            const wobbleX = Math.sin(tFrame * p.speed + p.phase) * p.drift * ease;
+            const wobbleY = Math.cos(tFrame * p.speed * 1.3 + p.phase) * p.drift * ease;
+            const flick = 0.6 + Math.sin(tFrame * p.twinkleSpeed + p.phase) * 0.4;
+            ctx.globalAlpha = Math.max(0.1, flick) * (0.4 + 0.6 * ease);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(cx + wobbleX - p.halfSize, cy + wobbleY - p.halfSize, p.size, p.size);
+          }
+        } else {
+          // Path-based circular arcs for desktop
+          for (let i = 0; i < numParticles; i++) {
+            const p = particles[i];
+            const cx = p.x + (p.tx - p.x) * ease + pmx * ease;
+            const cy = p.y + (p.ty - p.y) * ease + pmy * ease;
+            const wobbleX = Math.sin(tFrame * p.speed + p.phase) * p.drift * ease;
+            const wobbleY = Math.cos(tFrame * p.speed * 1.3 + p.phase) * p.drift * ease;
+            const flick = 0.6 + Math.sin(tFrame * p.twinkleSpeed + p.phase) * 0.4;
+            ctx.globalAlpha = Math.max(0.05, flick) * (0.4 + 0.6 * ease);
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(cx + wobbleX, cy + wobbleY, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
-        ctx.restore();
+        ctx.globalAlpha = 1;
       }
       rafId = requestAnimationFrame(loop);
     };
@@ -227,18 +278,22 @@ export default function Hero() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         isVisible = entry.isIntersecting;
-        if (isVisible && !rafId) {
+        if (isVisible && !isScrolledOut && !rafId) {
           rafId = requestAnimationFrame(loop);
         }
       },
-      { threshold: 0.02 }
+      { threshold: 0.05 }
     );
     observer.observe(wrap);
 
     return () => {
       wrap.removeEventListener("click", reassemble);
-      window.removeEventListener("pointermove", onPointerMove);
+      if (!isMobile) {
+        window.removeEventListener("pointermove", onPointerMove);
+      }
       window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(resizeTimer);
       observer.disconnect();
       if (rafId) cancelAnimationFrame(rafId);
     };

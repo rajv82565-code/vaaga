@@ -22,9 +22,12 @@ export default function About() {
 
     if (!video || !glow || !frame || !reel || !wordL || !wordR) return;
 
-    const gctx = glow.getContext("2d");
-    if ("filter" in gctx) gctx.filter = "blur(3px)";
-    else glow.classList.add("is-soft");
+    const isMobile = window.innerWidth <= 900 || window.matchMedia("(hover: none)").matches;
+    const gctx = !isMobile ? glow.getContext("2d") : null;
+    if (gctx) {
+      if ("filter" in gctx) gctx.filter = "blur(3px)";
+      else glow.classList.add("is-soft");
+    }
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -32,23 +35,26 @@ export default function About() {
     let rlLast = -1;
     let rafId = null;
     let inView = false;
+    let reelTop = 0;
+    let reelRun = 1;
+    let vh = window.innerHeight;
 
-    const tick = (t) => {
-      if (!inView) {
-        rafId = null;
-        return;
-      }
-
-      const vh = window.innerHeight;
-      const sy = window.scrollY;
+    const measureReel = () => {
+      vh = window.innerHeight;
       const rr = reel.getBoundingClientRect();
-      const top = rr.top + sy;
-      const run = Math.max(1, rr.height - vh);
-      const start = top - vh * 0.5;
-      const isReelInView = sy > top - vh && sy < top + run + vh;
-      const p = reduced ? 1 : Math.min(1, Math.max(0, (sy - start) / (vh * 0.5 + run * 0.6)));
+      reelTop = rr.top + window.scrollY;
+      reelRun = Math.max(1, rr.height - vh);
+    };
+    measureReel();
 
-      if (isReelInView && !video.paused && t - glowT > 66) {
+    const updateReel = (t = performance.now()) => {
+      const sy = window.scrollY;
+      const start = reelTop - vh * 0.5;
+      const isReelInView = sy > reelTop - vh && sy < reelTop + reelRun + vh;
+      const p = reduced ? 1 : Math.min(1, Math.max(0, (sy - start) / (vh * 0.5 + reelRun * 0.6)));
+
+      // Skip heavy video frame-to-canvas drawImage on mobile phones to prevent GPU pipeline stalls
+      if (!isMobile && gctx && isReelInView && !video.paused && t - glowT > 80) {
         glowT = t;
         gctx.drawImage(video, 0, 0, glow.width, glow.height);
       }
@@ -74,18 +80,56 @@ export default function About() {
           wordR.style.transform = `translate3d(${o2.toFixed(1)}px, -50%, 0)`;
         }
       }
+    };
 
-      rafId = requestAnimationFrame(tick);
+    let scrollTicking = false;
+    const onScroll = () => {
+      if (!inView) return;
+      if (!scrollTicking) {
+        scrollTicking = true;
+        requestAnimationFrame((now) => {
+          updateReel(now);
+          scrollTicking = false;
+        });
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    let resizeTimer = null;
+    const onResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        measureReel();
+        updateReel();
+      }, 100);
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+
+    // Video glow loop only when in view and on desktop
+    const tickVideo = (t) => {
+      if (!inView || isMobile) {
+        rafId = null;
+        return;
+      }
+      updateReel(t);
+      rafId = requestAnimationFrame(tickVideo);
     };
 
     const reelObserver = new IntersectionObserver(
       ([entry]) => {
         inView = entry.isIntersecting;
-        if (inView && !rafId) {
-          rafId = requestAnimationFrame(tick);
+        if (inView) {
+          measureReel();
+          updateReel();
+          if (!isMobile && !rafId) {
+            rafId = requestAnimationFrame(tickVideo);
+          }
+        } else if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
         }
       },
-      { rootMargin: "250px 0px 250px 0px", threshold: 0 }
+      { rootMargin: "150px 0px 150px 0px", threshold: 0 }
     );
     reelObserver.observe(reel);
 
@@ -128,7 +172,10 @@ export default function About() {
     if (statsEl) statsObserver.observe(statsEl);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      clearTimeout(resizeTimer);
+      if (rafId) cancelAnimationFrame(rafId);
       observer.disconnect();
       reelObserver.disconnect();
       statsObserver.disconnect();
